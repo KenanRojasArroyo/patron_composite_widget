@@ -1,99 +1,169 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
-  <meta charset="UTF-8">
-  <title>Widget Patrón Composite</title>
-  <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <title>Widget Patrón Composite</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
-  <div class="card">
-    <h2>Explorador Composite</h2>
-    
-    <!-- Panel Interactivo -->
-    <div class="controls">
-      <input type="text" id="nameInput" placeholder="Nombre (ej. app.js)" />
-      <input type="number" id="sizeInput" placeholder="KB" style="width: 70px;" />
-      <select id="parentSelect">
-        <option value="root">Proyecto_Final (Raíz)</option>
-        <option value="src">src</option>
-      </select>
-      <button onclick="addFile()">+ Agregar Archivo</button>
+    <div class="card">
+        <h2><i class="bi bi-diagram-3-fill"></i> Explorador Composite</h2>
+
+        <!-- Panel Interactivo -->
+        <div class="controls">
+            <input type="text" id="nameInput" placeholder="Nombre (ej. app.js)" />
+            <input type="number" id="sizeInput" placeholder="KB" style="width: 70px;" />
+            <select id="parentSelect">
+                <option value="root">Proyecto_Final (Raíz)</option>
+                <option value="src">src</option>
+            </select>
+            <button onclick="addFile()"><i class="bi bi-plus-lg"></i> Agregar Archivo</button>
+        </div>
+
+        <!-- Render Arbol -->
+        <div id="app"></div>
     </div>
 
-    <!-- Render Arbol -->
-    <div id="app"></div>
-  </div>
+    <script>
+        let idCounter = 1;
 
-  <script>
-    // 1. Componente Base
-    class FileSystemItem {
-      constructor(name) { this.name = name; }
-      getSize() { throw new Error("Método abstracto"); }
-      render() { throw new Error("Método abstracto"); }
-    }
+        // 1. Componente Base
+        class FileSystemItem {
+            constructor(name) {
+                this.id = idCounter++;
+                this.name = name;
+            }
+            getSize() { throw new Error("Método abstracto"); }
+            render() { throw new Error("Método abstracto"); }
+        }
 
-    // 2. Hoja (Leaf)
-    class FileItem extends FileSystemItem {
-      constructor(name, size) {
-        super(name);
-        this.size = Number(size);
-      }
-      getSize() { return this.size; }
-      render() {
-        return `<div class="file">📄 ${this.name} <span class="badge">${this.getSize()} KB</span></div>`;
-      }
-    }
+        // 2. Hoja (Leaf)
+        class FileItem extends FileSystemItem {
+            constructor(name, size) {
+                super(name);
+                this.size = Number(size);
+            }
+            getSize() { return this.size; }
+            render() {
+                return `
+          <div class="file" style="animation-delay: ${this.id * 15}ms;">
+            <i class="bi bi-file-earmark-text file-icon"></i>
+            <span class="item-name">${this.name}</span>
+            <span class="badge">${this.getSize()} KB</span>
+            <button class="btn-action" title="Editar" onclick="editItem(${this.id})"><i class="bi bi-pencil-fill"></i></button>
+            <button class="btn-action btn-danger" title="Eliminar" onclick="deleteItem(${this.id})"><i class="bi bi-trash-fill"></i></button>
+          </div>`;
+            }
+        }
 
-    // 3. Compuesto
-    class FolderItem extends FileSystemItem {
-      constructor(name) {
-        super(name);
-        this.children = [];
-      }
-      add(item) { this.children.push(item); }
-      getSize() {
-        return this.children.reduce((acc, child) => acc + child.getSize(), 0);
-      }
-      render() {
-        const childrenHTML = this.children.map(child => child.render()).join('');
-        return `
+        // 3. Compuesto (Composite)
+        class FolderItem extends FileSystemItem {
+            constructor(name) {
+                super(name);
+                this.children = [];
+            }
+
+            add(item) {
+                this.children.push(item);
+            }
+
+            // Operación recursiva para eliminar un elemento por ID
+            remove(id) {
+                this.children = this.children.filter(child => {
+                    if (child instanceof FolderItem) {
+                        child.remove(id);
+                    }
+                    return child.id !== id;
+                });
+            }
+
+            // Busqueda recursiva de un elemento por ID
+            find(id) {
+                for (const child of this.children) {
+                    if (child.id === id) return child;
+                    if (child instanceof FolderItem) {
+                        const found = child.find(id);
+                        if (found) return found;
+                    }
+                }
+                return null;
+            }
+
+            getSize() {
+                return this.children.reduce((acc, child) => acc + child.getSize(), 0);
+            }
+
+            render() {
+                const childrenHTML = this.children.map(child => child.render()).join('');
+                return `
           <div class="folder">
-            📁 <strong>${this.name}</strong> <span class="badge">${this.getSize()} KB total</span>
-            <div>${childrenHTML}</div>
+            <div class="folder-header">
+                <i class="bi bi-folder-fill folder-icon"></i>
+                <strong class="item-name">${this.name}</strong>
+                <span class="badge">${this.getSize()} KB total</span>
+            </div>
+            <div class="folder-children">${childrenHTML}</div>
           </div>
         `;
-      }
-    }
+            }
+        }
 
-    // Instancias fijas
-    const root = new FolderItem("Proyecto_Final");
-    const src = new FolderItem("src");
-    
-    src.add(new FileItem("index.js", 15));
-    src.add(new FileItem("styles.css", 10));
-    root.add(src);
-    root.add(new FileItem("README.md", 5));
+        // Instancias fijas
+        const root = new FolderItem("Proyecto_Final");
+        const src = new FolderItem("src");
 
-    function updateTree() {
-      document.getElementById("app").innerHTML = root.render();
-    }
+        src.add(new FileItem("index.js", 15));
+        src.add(new FileItem("styles.css", 10));
+        root.add(src);
+        root.add(new FileItem("README.md", 5));
 
-    function addFile() {
-      const name = document.getElementById("nameInput").value || "nuevo_archivo.txt";
-      const size = document.getElementById("sizeInput").value || 5;
-      const target = document.getElementById("parentSelect").value;
+        function updateTree() {
+            document.getElementById("app").innerHTML = root.render();
+        }
 
-      const newFile = new FileItem(name, size);
+        function addFile() {
+            const nameInput = document.getElementById("nameInput");
+            const sizeInput = document.getElementById("sizeInput");
+            const target = document.getElementById("parentSelect").value;
 
-      if (target === "src") src.add(newFile);
-      else root.add(newFile);
+            const name = nameInput.value.trim() || "nuevo_archivo.txt";
+            const size = sizeInput.value || 5;
 
-      document.getElementById("nameInput").value = "";
-      document.getElementById("sizeInput").value = "";
-      updateTree();
-    }
+            const newFile = new FileItem(name, size);
 
-    updateTree();
-  </script>
+            if (target === "src") src.add(newFile);
+            else root.add(newFile);
+
+            nameInput.value = "";
+            sizeInput.value = "";
+            updateTree();
+        }
+
+        function deleteItem(id) {
+            root.remove(id);
+            updateTree();
+        }
+
+        function editItem(id) {
+            const item = root.find(id);
+            if (!item) return;
+
+            const newName = prompt("Nuevo nombre del archivo:", item.name);
+            if (newName === null) return;
+
+            const newSize = prompt("Nuevo tamaño (KB):", item.size);
+            if (newSize === null) return;
+
+            item.name = newName.trim() || item.name;
+            item.size = Number(newSize) || item.size;
+            updateTree();
+        }
+
+        updateTree();
+    </script>
 </body>
+
 </html>
