@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Patrón Composite - Explorador de Archivos</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 20px; background: #f4f4f9; }
+    .card { background: white; padding: 20px; border-radius: 8px; max-width: 500px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .folder { margin-left: 15px; border-left: 2px dashed #ccc; padding-left: 10px; margin-top: 5px; }
+    .file { margin-left: 25px; color: #555; margin-top: 3px; }
+    .badge { background: #e0e0e0; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Demostración: Patrón Composite</h2>
+    <div id="app"></div>
+  </div>
+
+  <script>
+    // 1. Componente Base (Interfaz común)
+    class FileSystemItem {
+      constructor(name) { this.name = name; }
+      getSize() { throw new Error("Método no implementado"); }
+      render() { throw new Error("Método no implementado"); }
+    }
+
+    // 2. Hoja
+    class FileItem extends FileSystemItem {
+      constructor(name, size) {
+        super(name);
+        this.size = size;
+      }
+      getSize() { return this.size; }
+      render() {
+        return `<div class="file">📄 ${this.name} <span class="badge">${this.getSize()} KB</span></div>`;
+      }
+    }
+
+    // 3. Compuesto
+    class FolderItem extends FileSystemItem {
+      constructor(name) {
+        super(name);
+        this.children = [];
+      }
+      add(item) { this.children.push(item); }
+      getSize() {
+        return this.children.reduce((acc, child) => acc + child.getSize(), 0);
+      }
+      render() {
+        const childrenHTML = this.children.map(child => child.render()).join('');
+        return `
+          <div class="folder">
+            📁 <strong>${this.name}</strong> <span class="badge">${this.getSize()} KB total</span>
+            <div>${childrenHTML}</div>
+          </div>
+        `;
+      }
+    }
+
+    // --- CONSTRUCCIÓN DEL ÁRBOL COMPOSITE ---
+    const root = new FolderItem("Proyecto_Final");
+    const src = new FolderItem("src");
+    
+    src.add(new FileItem("index.js", 15));
+    src.add(new FileItem("styles.css", 10));
+
+    root.add(src);
+    root.add(new FileItem("README.md", 5));
+    root.add(new FileItem("package.json", 2));
+
+    // Renderizado transparente (trata carpetas y archivos por igual)
+    document.getElementById("app").innerHTML = root.render();
+  </script>
+</body>
+</html>
