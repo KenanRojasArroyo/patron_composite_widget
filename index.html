@@ -2,34 +2,52 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Patrón Composite - Explorador de Archivos</title>
+  <title>Widget Patrón Composite</title>
   <style>
-    body { font-family: system-ui, sans-serif; padding: 20px; background: #f4f4f9; }
-    .card { background: white; padding: 20px; border-radius: 8px; max-width: 500px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    .folder { margin-left: 15px; border-left: 2px dashed #ccc; padding-left: 10px; margin-top: 5px; }
-    .file { margin-left: 25px; color: #555; margin-top: 3px; }
-    .badge { background: #e0e0e0; padding: 2px 6px; border-radius: 4px; font-size: 0.8em; }
+    body { font-family: system-ui, sans-serif; padding: 30px; background: #f4f5f7; color: #333; }
+    .card { background: white; padding: 25px; border-radius: 12px; max-width: 550px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    .controls { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+    input, select, button { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9em; }
+    button { background: #0969da; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background: #0451a5; }
+    .folder { margin-left: 15px; border-left: 2px dashed #bbb; padding-left: 12px; margin-top: 8px; }
+    .file { margin-left: 20px; color: #444; margin-top: 4px; }
+    .badge { background: #e1e4e8; color: #24292e; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: bold; }
   </style>
 </head>
 <body>
+
   <div class="card">
-    <h2>Demostración: Patrón Composite</h2>
+    <h2>Explorador Composite</h2>
+    
+    <!-- Panel Interactivo -->
+    <div class="controls">
+      <input type="text" id="nameInput" placeholder="Nombre (ej. app.js)" />
+      <input type="number" id="sizeInput" placeholder="KB" style="width: 70px;" />
+      <select id="parentSelect">
+        <option value="root">Proyecto_Final (Raíz)</option>
+        <option value="src">src</option>
+      </select>
+      <button onclick="addFile()">+ Agregar Archivo</button>
+    </div>
+
+    <!-- Renderizado del Árbol -->
     <div id="app"></div>
   </div>
 
   <script>
-    // 1. Componente Base (Interfaz común)
+    // 1. Componente Base
     class FileSystemItem {
       constructor(name) { this.name = name; }
-      getSize() { throw new Error("Método no implementado"); }
-      render() { throw new Error("Método no implementado"); }
+      getSize() { throw new Error("Método abstracto"); }
+      render() { throw new Error("Método abstracto"); }
     }
 
-    // 2. Hoja
+    // 2. Hoja (Leaf)
     class FileItem extends FileSystemItem {
       constructor(name, size) {
         super(name);
-        this.size = size;
+        this.size = Number(size);
       }
       getSize() { return this.size; }
       render() {
@@ -37,7 +55,7 @@
       }
     }
 
-    // 3. Compuesto
+    // 3. Compuesto (Composite)
     class FolderItem extends FileSystemItem {
       constructor(name) {
         super(name);
@@ -58,19 +76,36 @@
       }
     }
 
-    // --- CONSTRUCCIÓN DEL ÁRBOL COMPOSITE ---
+    // Instancias fijas
     const root = new FolderItem("Proyecto_Final");
     const src = new FolderItem("src");
     
     src.add(new FileItem("index.js", 15));
     src.add(new FileItem("styles.css", 10));
-
     root.add(src);
     root.add(new FileItem("README.md", 5));
-    root.add(new FileItem("package.json", 2));
 
-    // Renderizado transparente (trata carpetas y archivos por igual)
-    document.getElementById("app").innerHTML = root.render();
+    function updateTree() {
+      document.getElementById("app").innerHTML = root.render();
+    }
+
+    function addFile() {
+      const name = document.getElementById("nameInput").value || "nuevo_archivo.txt";
+      const size = document.getElementById("sizeInput").value || 5;
+      const target = document.getElementById("parentSelect").value;
+
+      const newFile = new FileItem(name, size);
+
+      if (target === "src") src.add(newFile);
+      else root.add(newFile);
+
+      document.getElementById("nameInput").value = "";
+      document.getElementById("sizeInput").value = "";
+      updateTree();
+    }
+
+    // Carga inicial
+    updateTree();
   </script>
 </body>
 </html>
