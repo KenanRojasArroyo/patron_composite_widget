@@ -3,20 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Widget Patrón Composite</title>
-  <style>
-    body { font-family: system-ui, sans-serif; padding: 30px; background: #f4f5f7; color: #333; }
-    .card { background: white; padding: 25px; border-radius: 12px; max-width: 550px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .controls { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
-    input, select, button { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-size: 0.9em; }
-    button { background: #0969da; color: white; border: none; cursor: pointer; font-weight: bold; }
-    button:hover { background: #0451a5; }
-    .folder { margin-left: 15px; border-left: 2px dashed #bbb; padding-left: 12px; margin-top: 8px; }
-    .file { margin-left: 20px; color: #444; margin-top: 4px; }
-    .badge { background: #e1e4e8; color: #24292e; padding: 2px 8px; border-radius: 12px; font-size: 0.75em; font-weight: bold; }
-  </style>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-
   <div class="card">
     <h2>Explorador Composite</h2>
     
@@ -31,7 +20,7 @@
       <button onclick="addFile()">+ Agregar Archivo</button>
     </div>
 
-    <!-- Renderizado del Árbol -->
+    <!-- Render Arbol -->
     <div id="app"></div>
   </div>
 
@@ -55,7 +44,7 @@
       }
     }
 
-    // 3. Compuesto (Composite)
+    // 3. Compuesto
     class FolderItem extends FileSystemItem {
       constructor(name) {
         super(name);
@@ -104,7 +93,6 @@
       updateTree();
     }
 
-    // Carga inicial
     updateTree();
   </script>
 </body>
